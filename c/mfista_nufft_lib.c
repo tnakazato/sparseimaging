@@ -29,6 +29,10 @@
 
 /* nufft */
 
+/*
+  in-place matrix transpose
+  ref: https://rosettacode.org/wiki/Matrix_transposition#C
+*/
 void transpose(fftw_complex *m, int w, int h)
 {
 	int start, next, i;
