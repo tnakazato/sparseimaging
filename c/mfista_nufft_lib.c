@@ -29,6 +29,28 @@
 
 /* nufft */
 
+void transpose(fftw_complex *m, int w, int h)
+{
+	int start, next, i;
+	double tmp;
+ 
+	for (start = 0; start <= w * h - 1; start++) {
+		next = start;
+		i = 0;
+		do {	i++;
+			next = (next % h) * w + next / h;
+		} while (next > start);
+		if (next < start || i == 1) continue;
+ 
+		tmp = m[next = start];
+		do {
+			i = (next % h) * w + next / h;
+			m[next] = (i == start) ? tmp : m[i];
+			next = i;
+		} while (next > start);
+	}
+}
+
 int idx_fftw(int m, int Mr)
 {
   if(m >= 0 && m < Mr/2)
@@ -209,6 +231,8 @@ void NUFFT2d2(double *Fout_r, double *Fout_i,
 
   fftw_execute(*fftwplan_r2c);
 
+  transpose(out, Mh, Mry);
+
   for(k = 0; k < M; ++k) for(ly = (-MSP+1); ly <= MSP; ++ly){
 	
       f_r = E1[k]*E2y[2*MSP*k + (ly+MSP-1)]*E3y[abs(ly)];
@@ -221,8 +245,8 @@ void NUFFT2d2(double *Fout_r, double *Fout_i,
 	  idx = idx_fftw((mx[k]+lx),Mrx);
 	  tmp = f_r*E2x[2*MSP*k + (lx+MSP-1)]*E3x[abs(lx)]/MM;
 
-	  Fout_r[k] +=           creal(out[idx*Mh + idy])*tmp;
-	  Fout_i[k] += (NU_SIGN)*cimag(out[idx*Mh + idy])*tmp;
+	  Fout_r[k] +=           creal(out[idy*Mry + idx])*tmp;
+	  Fout_i[k] += (NU_SIGN)*cimag(out[idy*Mry + idx])*tmp;
 	}
       }
 
@@ -234,8 +258,8 @@ void NUFFT2d2(double *Fout_r, double *Fout_i,
 	    idx = idx_fftw(-(mx[k]+lx),Mrx);
 	    tmp = f_r*E2x[2*MSP*k + (lx+MSP-1)]*E3x[abs(lx)]/MM;
 	    
-	    Fout_r[k] +=            creal(out[idx*Mh + idy])*tmp;
-	    Fout_i[k] += -(NU_SIGN)*cimag(out[idx*Mh + idy])*tmp;
+	    Fout_r[k] +=            creal(out[idy*Mry + idx])*tmp;
+	    Fout_i[k] += -(NU_SIGN)*cimag(out[idy*Mry + idx])*tmp;
 	  }
       }
     }
